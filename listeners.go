@@ -168,7 +168,7 @@ func (fcpc *fakeClosePacketConn) Close() error {
 	return nil
 }
 
-// Supports QUIC implementation: https://git.sequentialread.com/forest/caddy/issues/3998
+// Supports QUIC implementation: https://github.com/caddyserver/caddy/issues/3998
 func (fcpc fakeClosePacketConn) SetReadBuffer(bytes int) error {
 	if conn, ok := fcpc.PacketConn.(interface{ SetReadBuffer(int) error }); ok {
 		return conn.SetReadBuffer(bytes)
@@ -176,7 +176,7 @@ func (fcpc fakeClosePacketConn) SetReadBuffer(bytes int) error {
 	return fmt.Errorf("SetReadBuffer() not implemented for %T", fcpc.PacketConn)
 }
 
-// Supports QUIC implementation: https://git.sequentialread.com/forest/caddy/issues/3998
+// Supports QUIC implementation: https://github.com/caddyserver/caddy/issues/3998
 func (fcpc fakeClosePacketConn) SyscallConn() (syscall.RawConn, error) {
 	if conn, ok := fcpc.PacketConn.(interface {
 		SyscallConn() (syscall.RawConn, error)
@@ -423,7 +423,7 @@ var listenerPool = NewUsagePool()
 
 const maxPortSpan = 65535
 
-// Interface guards (see https://git.sequentialread.com/forest/caddy/issues/3998)
+// Interface guards (see https://github.com/caddyserver/caddy/issues/3998)
 var (
 	_ (interface{ SetReadBuffer(int) error }) = (*fakeClosePacketConn)(nil)
 	_ (interface {

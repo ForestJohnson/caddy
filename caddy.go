@@ -459,20 +459,6 @@ func run(newCfg *Config, start bool) error {
 
 // finishSettingUp should be run after all apps have successfully started.
 func finishSettingUp(ctx Context, cfg *Config) error {
-	// establish this server's identity (only after apps are loaded
-	// so that cert management of this endpoint doesn't prevent user's
-	// servers from starting which likely also use HTTP/HTTPS ports;
-	// but before remote management which may depend on these creds)
-	err := manageIdentity(ctx, cfg)
-	if err != nil {
-		return fmt.Errorf("provisioning remote admin endpoint: %v", err)
-	}
-
-	// replace any remote admin endpoint
-	err = replaceRemoteAdminServer(ctx, cfg)
-	if err != nil {
-		return fmt.Errorf("provisioning remote admin endpoint: %v", err)
-	}
 
 	// if dynamic config is requested, set that up and run it
 	if cfg != nil && cfg.Admin != nil && cfg.Admin.Config != nil && cfg.Admin.Config.LoadRaw != nil {

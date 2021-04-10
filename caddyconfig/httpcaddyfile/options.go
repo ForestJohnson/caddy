@@ -295,18 +295,7 @@ func parseOptAdmin(d *caddyfile.Dispenser, _ interface{}) (interface{}, error) {
 				}
 			}
 		}
-		for nesting := d.Nesting(); d.NextBlock(nesting); {
-			switch d.Val() {
-			case "enforce_origin":
-				adminCfg.EnforceOrigin = true
 
-			case "origins":
-				adminCfg.Origins = d.RemainingArgs()
-
-			default:
-				return nil, d.Errf("unrecognized parameter '%s'", d.Val())
-			}
-		}
 	}
 	if adminCfg.Listen == "" && !adminCfg.Disabled {
 		adminCfg.Listen = caddy.DefaultAdminListen

@@ -46,8 +46,6 @@ type HTTPLoader struct {
 	Timeout caddy.Duration `json:"timeout,omitempty"`
 
 	TLS *struct {
-		// Present this instance's managed remote identity credentials to the server.
-		UseServerIdentity bool `json:"use_server_identity,omitempty"`
 
 		// PEM-encoded client certificate filename to present to the server.
 		ClientCertificateFile string `json:"client_certificate_file,omitempty"`
@@ -121,16 +119,7 @@ func (hl HTTPLoader) makeClient(ctx caddy.Context) (*http.Client, error) {
 		var tlsConfig *tls.Config
 
 		// client authentication
-		if hl.TLS.UseServerIdentity {
-			certs, err := ctx.IdentityCredentials(ctx.Logger(hl))
-			if err != nil {
-				return nil, fmt.Errorf("getting server identity credentials: %v", err)
-			}
-			if tlsConfig == nil {
-				tlsConfig = new(tls.Config)
-			}
-			tlsConfig.Certificates = certs
-		} else if hl.TLS.ClientCertificateFile != "" && hl.TLS.ClientCertificateKeyFile != "" {
+		if hl.TLS.ClientCertificateFile != "" && hl.TLS.ClientCertificateKeyFile != "" {
 			cert, err := tls.LoadX509KeyPair(hl.TLS.ClientCertificateFile, hl.TLS.ClientCertificateKeyFile)
 			if err != nil {
 				return nil, err

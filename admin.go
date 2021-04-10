@@ -26,6 +26,7 @@ import (
 	"expvar"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/pprof"
@@ -58,39 +59,14 @@ type AdminConfig struct {
 	// parsed by Caddy. Default: localhost:2019
 	Listen string `json:"listen,omitempty"`
 
-	// If true, CORS headers will be emitted, and requests to the
-	// API will be rejected if their `Host` and `Origin` headers
-	// do not match the expected value(s). Use `origins` to
-	// customize which origins/hosts are allowed. If `origins` is
-	// not set, the listen address is the only value allowed by
-	// default. Enforced only on local (plaintext) endpoint.
-	EnforceOrigin bool `json:"enforce_origin,omitempty"`
-
-	// The list of allowed origins/hosts for API requests. Only needed
-	// if accessing the admin endpoint from a host different from the
-	// socket's network interface or if `enforce_origin` is true. If not
-	// set, the listener address will be the default value. If set but
-	// empty, no origins will be allowed. Enforced only on local
-	// (plaintext) endpoint.
-	Origins []string `json:"origins,omitempty"`
-
 	// Options pertaining to configuration management.
 	Config *ConfigSettings `json:"config,omitempty"`
 
-	// Options that establish this server's identity. Identity refers to
-	// credentials which can be used to uniquely identify and authenticate
-	// this server instance. This is required if remote administration is
-	// enabled (but does not require remote administration to be enabled).
-	// Default: no identity management.
-	Identity *IdentityConfig `json:"identity,omitempty"`
-
-	// Options pertaining to remote administration. By default, remote
-	// administration is disabled. If enabled, identity management must
-	// also be configured, as that is how the endpoint is secured.
-	// See the neighboring "identity" object.
-	//
-	// EXPERIMENTAL: This feature is subject to change.
-	Remote *RemoteAdmin `json:"remote,omitempty"`
+	// Forest's quick & simple replacement for the complex admin endpoint security stuff.
+	// Basic mTLS with user-provided external CA
+	TLSKeyFile              string `json:"tls_key_file,omitempty"`
+	TLSCertFile             string `json:"tls_cert_file,omitempty"`
+	AuthorizedClientsCAFile string `json:"authorized_clients_ca_file,omitempty"`
 }
 
 // ConfigSettings configures the management of configuration.
@@ -186,14 +162,6 @@ type AdminPermissions struct {
 func (admin AdminConfig) newAdminHandler(addr NetworkAddress, remote bool) adminHandler {
 	muxWrap := adminHandler{mux: http.NewServeMux()}
 
-	// secure the local or remote endpoint respectively
-	if remote {
-		muxWrap.remoteControl = admin.Remote
-	} else {
-		muxWrap.enforceHost = !addr.isWildcardInterface()
-		muxWrap.allowedOrigins = admin.allowedOrigins(addr)
-	}
-
 	addRouteWithMetrics := func(pattern string, handlerLabel string, h http.Handler) {
 		labels := prometheus.Labels{"path": pattern, "handler": handlerLabel}
 		h = instrumentHandlerCounter(
@@ -247,42 +215,6 @@ func (admin AdminConfig) newAdminHandler(addr NetworkAddress, remote bool) admin
 	return muxWrap
 }
 
-// allowedOrigins returns a list of origins that are allowed.
-// If admin.Origins is nil (null), the provided listen address
-// will be used as the default origin. If admin.Origins is
-// empty, no origins will be allowed, effectively bricking the
-// endpoint for non-unix-socket endpoints, but whatever.
-func (admin AdminConfig) allowedOrigins(addr NetworkAddress) []string {
-	uniqueOrigins := make(map[string]struct{})
-	for _, o := range admin.Origins {
-		uniqueOrigins[o] = struct{}{}
-	}
-	if admin.Origins == nil {
-		if addr.isLoopback() {
-			if addr.IsUnixNetwork() {
-				// RFC 2616, Section 14.26:
-				// "A client MUST include a Host header field in all HTTP/1.1 request
-				// messages. If the requested URI does not include an Internet host
-				// name for the service being requested, then the Host header field MUST
-				// be given with an empty value."
-				uniqueOrigins[""] = struct{}{}
-			} else {
-				uniqueOrigins[net.JoinHostPort("localhost", addr.port())] = struct{}{}
-				uniqueOrigins[net.JoinHostPort("::1", addr.port())] = struct{}{}
-				uniqueOrigins[net.JoinHostPort("127.0.0.1", addr.port())] = struct{}{}
-			}
-		}
-		if !addr.IsUnixNetwork() {
-			uniqueOrigins[addr.JoinHostPort(0)] = struct{}{}
-		}
-	}
-	allowed := make([]string, 0, len(uniqueOrigins))
-	for origin := range uniqueOrigins {
-		allowed = append(allowed, origin)
-	}
-	return allowed
-}
-
 // replaceLocalAdminServer replaces the running local admin server
 // according to the relevant configuration in cfg. If no configuration
 // for the admin endpoint exists in cfg, a default one is used, so
@@ -334,6 +266,30 @@ func replaceLocalAdminServer(cfg *Config) error {
 		return err
 	}
 
+	if cfg.Admin.TLSCertFile != "" && cfg.Admin.TLSKeyFile != "" {
+
+		adminListenerTLSCert, err := tls.LoadX509KeyPair(cfg.Admin.TLSCertFile, cfg.Admin.TLSKeyFile)
+		if err != nil {
+			return err
+		}
+
+		adminListenerClientCertCAPool := x509.NewCertPool()
+		adminListenerClientCertCABytes, err := ioutil.ReadFile(cfg.Admin.AuthorizedClientsCAFile)
+		if err != nil {
+			return err
+		}
+		adminListenerClientCertCAPool.AppendCertsFromPEM(adminListenerClientCertCABytes)
+
+		tlsConfig := &tls.Config{
+			Certificates: []tls.Certificate{adminListenerTLSCert},
+			ClientCAs:    adminListenerClientCertCAPool,
+			ClientAuth:   tls.RequireAndVerifyClientCert,
+		}
+		tlsConfig.BuildNameToCertificate()
+
+		ln = tls.NewListener(ln, tlsConfig)
+	}
+
 	serverMu.Lock()
 	localAdminServer = &http.Server{
 		Addr:              addr.String(), // for logging purposes only
@@ -356,162 +312,6 @@ func replaceLocalAdminServer(cfg *Config) error {
 	}()
 
 	adminLogger.Info("admin endpoint started",
-		zap.String("address", addr.String()),
-		zap.Bool("enforce_origin", adminConfig.EnforceOrigin),
-		zap.Strings("origins", handler.allowedOrigins))
-
-	if !handler.enforceHost {
-		adminLogger.Warn("admin endpoint on open interface; host checking disabled",
-			zap.String("address", addr.String()))
-	}
-
-	return nil
-}
-
-// manageIdentity sets up automated identity management for this server.
-func manageIdentity(ctx Context, cfg *Config) error {
-	if cfg == nil || cfg.Admin == nil || cfg.Admin.Identity == nil {
-		return nil
-	}
-
-	// set default issuers; this is pretty hacky because we can't
-	// import the caddytls package -- but it works
-	if cfg.Admin.Identity.IssuersRaw == nil {
-		cfg.Admin.Identity.IssuersRaw = []json.RawMessage{
-			json.RawMessage(`{"module": "zerossl"}`),
-			json.RawMessage(`{"module": "acme"}`),
-		}
-	}
-
-	// load and provision issuer modules
-	if cfg.Admin.Identity.IssuersRaw != nil {
-		val, err := ctx.LoadModule(cfg.Admin.Identity, "IssuersRaw")
-		if err != nil {
-			return fmt.Errorf("loading identity issuer modules: %s", err)
-		}
-		for _, issVal := range val.([]interface{}) {
-			cfg.Admin.Identity.issuers = append(cfg.Admin.Identity.issuers, issVal.(certmagic.Issuer))
-		}
-	}
-
-	// we'll make a new cache when we make the CertMagic config, so stop any previous cache
-	if identityCertCache != nil {
-		identityCertCache.Stop()
-	}
-
-	logger := Log().Named("admin.identity")
-	cmCfg := cfg.Admin.Identity.certmagicConfig(logger, true)
-
-	// issuers have circular dependencies with the configs because,
-	// as explained in the caddytls package, they need access to the
-	// correct storage and cache to solve ACME challenges
-	for _, issuer := range cfg.Admin.Identity.issuers {
-		// avoid import cycle with caddytls package, so manually duplicate the interface here, yuck
-		if annoying, ok := issuer.(interface{ SetConfig(cfg *certmagic.Config) }); ok {
-			annoying.SetConfig(cmCfg)
-		}
-	}
-
-	// obtain and renew server identity certificate(s)
-	return cmCfg.ManageAsync(ctx, cfg.Admin.Identity.Identifiers)
-}
-
-// replaceRemoteAdminServer replaces the running remote admin server
-// according to the relevant configuration in cfg. It stops any previous
-// remote admin server and only starts a new one if configured.
-func replaceRemoteAdminServer(ctx Context, cfg *Config) error {
-	if cfg == nil {
-		return nil
-	}
-
-	remoteLogger := Log().Named("admin.remote")
-
-	oldAdminServer := remoteAdminServer
-	defer func() {
-		if oldAdminServer != nil {
-			go func(oldAdminServer *http.Server) {
-				err := stopAdminServer(oldAdminServer)
-				if err != nil {
-					Log().Named("admin").Error("stopping current secure admin endpoint", zap.Error(err))
-				}
-			}(oldAdminServer)
-		}
-	}()
-
-	if cfg.Admin == nil || cfg.Admin.Remote == nil {
-		return nil
-	}
-
-	addr, err := parseAdminListenAddr(cfg.Admin.Remote.Listen, DefaultRemoteAdminListen)
-	if err != nil {
-		return err
-	}
-
-	// make the HTTP handler but disable Host/Origin enforcement
-	// because we are using TLS authentication instead
-	handler := cfg.Admin.newAdminHandler(addr, true)
-
-	// create client certificate pool for TLS mutual auth, and extract public keys
-	// so that we can enforce access controls at the application layer
-	clientCertPool := x509.NewCertPool()
-	for i, accessControl := range cfg.Admin.Remote.AccessControl {
-		for j, certBase64 := range accessControl.PublicKeys {
-			cert, err := decodeBase64DERCert(certBase64)
-			if err != nil {
-				return fmt.Errorf("access control %d public key %d: parsing base64 certificate DER: %v", i, j, err)
-			}
-			accessControl.publicKeys = append(accessControl.publicKeys, cert.PublicKey)
-			clientCertPool.AddCert(cert)
-		}
-	}
-
-	// create TLS config that will enforce mutual authentication
-	if identityCertCache == nil {
-		return fmt.Errorf("cannot enable remote admin without a certificate cache; configure identity management to initialize a certificate cache")
-	}
-	cmCfg := cfg.Admin.Identity.certmagicConfig(remoteLogger, false)
-	tlsConfig := cmCfg.TLSConfig()
-	tlsConfig.NextProtos = nil // this server does not solve ACME challenges
-	tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
-	tlsConfig.ClientCAs = clientCertPool
-
-	// convert logger to stdlib so it can be used by HTTP server
-	serverLogger, err := zap.NewStdLogAt(remoteLogger, zap.DebugLevel)
-	if err != nil {
-		return err
-	}
-
-	serverMu.Lock()
-	// create secure HTTP server
-	remoteAdminServer = &http.Server{
-		Addr:              addr.String(), // for logging purposes only
-		Handler:           handler,
-		TLSConfig:         tlsConfig,
-		ReadTimeout:       10 * time.Second,
-		ReadHeaderTimeout: 5 * time.Second,
-		IdleTimeout:       60 * time.Second,
-		MaxHeaderBytes:    1024 * 64,
-		ErrorLog:          serverLogger,
-	}
-	serverMu.Unlock()
-
-	// start listener
-	ln, err := Listen(addr.Network, addr.JoinHostPort(0))
-	if err != nil {
-		return err
-	}
-	ln = tls.NewListener(ln, tlsConfig)
-
-	go func() {
-		serverMu.Lock()
-		server := remoteAdminServer
-		serverMu.Unlock()
-		if err := server.Serve(ln); !errors.Is(err, http.ErrServerClosed) {
-			remoteLogger.Error("admin remote server shutdown for unknown reason", zap.Error(err))
-		}
-	}()
-
-	remoteLogger.Info("secure admin remote control endpoint started",
 		zap.String("address", addr.String()))
 
 	return nil
@@ -536,90 +336,6 @@ func (ident *IdentityConfig) certmagicConfig(logger *zap.Logger, makeCache bool)
 		})
 	}
 	return certmagic.New(identityCertCache, *cmCfg)
-}
-
-// IdentityCredentials returns this instance's configured, managed identity credentials
-// that can be used in TLS client authentication.
-func (ctx Context) IdentityCredentials(logger *zap.Logger) ([]tls.Certificate, error) {
-	if ctx.cfg == nil || ctx.cfg.Admin == nil || ctx.cfg.Admin.Identity == nil {
-		return nil, fmt.Errorf("no server identity configured")
-	}
-	ident := ctx.cfg.Admin.Identity
-	if len(ident.Identifiers) == 0 {
-		return nil, fmt.Errorf("no identifiers configured")
-	}
-	if logger == nil {
-		logger = Log()
-	}
-	magic := ident.certmagicConfig(logger, false)
-	return magic.ClientCredentials(ctx, ident.Identifiers)
-}
-
-// enforceAccessControls enforces application-layer access controls for r based on remote.
-// It expects that the TLS server has already established at least one verified chain of
-// trust, and then looks for a matching, authorized public key that is allowed to access
-// the defined path(s) using the defined method(s).
-func (remote RemoteAdmin) enforceAccessControls(r *http.Request) error {
-	for _, chain := range r.TLS.VerifiedChains {
-		for _, peerCert := range chain {
-			for _, adminAccess := range remote.AccessControl {
-				for _, allowedKey := range adminAccess.publicKeys {
-					// see if we found a matching public key; the TLS server already verified the chain
-					// so we know the client possesses the associated private key; this handy interface
-					// doesn't appear to be defined anywhere in the std lib, but was implemented here:
-					// https://github.com/golang/go/commit/b5f2c0f50297fa5cd14af668ddd7fd923626cf8c
-					comparer, ok := peerCert.PublicKey.(interface{ Equal(crypto.PublicKey) bool })
-					if !ok || !comparer.Equal(allowedKey) {
-						continue
-					}
-
-					// key recognized; make sure its HTTP request is permitted
-					for _, accessPerm := range adminAccess.Permissions {
-						// verify method
-						methodFound := accessPerm.Methods == nil
-						for _, method := range accessPerm.Methods {
-							if method == r.Method {
-								methodFound = true
-								break
-							}
-						}
-						if !methodFound {
-							return APIError{
-								HTTPStatus: http.StatusForbidden,
-								Message:    "not authorized to use this method",
-							}
-						}
-
-						// verify path
-						pathFound := accessPerm.Paths == nil
-						for _, allowedPath := range accessPerm.Paths {
-							if strings.HasPrefix(r.URL.Path, allowedPath) {
-								pathFound = true
-								break
-							}
-						}
-						if !pathFound {
-							return APIError{
-								HTTPStatus: http.StatusForbidden,
-								Message:    "not authorized to access this path",
-							}
-						}
-					}
-
-					// public key authorized, method and path allowed
-					return nil
-				}
-			}
-		}
-	}
-
-	// in theory, this should never happen; with an unverified chain, the TLS server
-	// should not accept the connection in the first place, and the acceptable cert
-	// pool is configured using the same list of public keys we verify against
-	return APIError{
-		HTTPStatus: http.StatusUnauthorized,
-		Message:    "client identity not authorized",
-	}
 }
 
 func stopAdminServer(srv *http.Server) error {
@@ -651,9 +367,8 @@ type adminHandler struct {
 	mux *http.ServeMux
 
 	// security for local/plaintext) endpoint, on by default
-	enforceOrigin  bool
-	enforceHost    bool
-	allowedOrigins []string
+	enforceOrigin bool
+	enforceHost   bool
 
 	// security for remote/encrypted endpoint
 	remoteControl *RemoteAdmin
@@ -693,13 +408,6 @@ func (h adminHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // be called more than once per request, for example if a request
 // is rewritten (i.e. internal redirect).
 func (h adminHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
-	if h.remoteControl != nil {
-		// enforce access controls on secure endpoint
-		if err := h.remoteControl.enforceAccessControls(r); err != nil {
-			h.handleError(w, r, err)
-			return
-		}
-	}
 
 	if strings.Contains(r.Header.Get("Upgrade"), "websocket") {
 		// I've never been able demonstrate a vulnerability myself, but apparently
@@ -707,31 +415,6 @@ func (h adminHandler) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		// restrictions, so we'll just be on the safe side
 		h.handleError(w, r, fmt.Errorf("websocket connections aren't allowed"))
 		return
-	}
-
-	if h.enforceHost {
-		// DNS rebinding mitigation
-		err := h.checkHost(r)
-		if err != nil {
-			h.handleError(w, r, err)
-			return
-		}
-	}
-
-	if h.enforceOrigin {
-		// cross-site mitigation
-		origin, err := h.checkOrigin(r)
-		if err != nil {
-			h.handleError(w, r, err)
-			return
-		}
-
-		if r.Method == http.MethodOptions {
-			w.Header().Set("Access-Control-Allow-Methods", "OPTIONS, GET, POST, PUT, PATCH, DELETE")
-			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Cache-Control")
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-		}
-		w.Header().Set("Access-Control-Allow-Origin", origin)
 	}
 
 	h.mux.ServeHTTP(w, r)
@@ -779,12 +462,6 @@ func (h adminHandler) handleError(w http.ResponseWriter, r *http.Request, err er
 // rebinding attacks.
 func (h adminHandler) checkHost(r *http.Request) error {
 	var allowed bool
-	for _, allowedHost := range h.allowedOrigins {
-		if r.Host == allowedHost {
-			allowed = true
-			break
-		}
-	}
 	if !allowed {
 		return APIError{
 			HTTPStatus: http.StatusForbidden,
@@ -792,27 +469,6 @@ func (h adminHandler) checkHost(r *http.Request) error {
 		}
 	}
 	return nil
-}
-
-// checkOrigin ensures that the Origin header, if
-// set, matches the intended target; prevents arbitrary
-// sites from issuing requests to our listener. It
-// returns the origin that was obtained from r.
-func (h adminHandler) checkOrigin(r *http.Request) (string, error) {
-	origin := h.getOriginHost(r)
-	if origin == "" {
-		return origin, APIError{
-			HTTPStatus: http.StatusForbidden,
-			Err:        fmt.Errorf("missing required Origin header"),
-		}
-	}
-	if !h.originAllowed(origin) {
-		return origin, APIError{
-			HTTPStatus: http.StatusForbidden,
-			Err:        fmt.Errorf("client is not allowed to access from origin %s", origin),
-		}
-	}
-	return origin, nil
 }
 
 func (h adminHandler) getOriginHost(r *http.Request) string {
@@ -825,21 +481,6 @@ func (h adminHandler) getOriginHost(r *http.Request) string {
 		origin = originURL.Host
 	}
 	return origin
-}
-
-func (h adminHandler) originAllowed(origin string) bool {
-	for _, allowedOrigin := range h.allowedOrigins {
-		originCopy := origin
-		if !strings.Contains(allowedOrigin, "://") {
-			// no scheme specified, so allow both
-			originCopy = strings.TrimPrefix(originCopy, "http://")
-			originCopy = strings.TrimPrefix(originCopy, "https://")
-		}
-		if originCopy == allowedOrigin {
-			return true
-		}
-	}
-	return false
 }
 
 func handleConfig(w http.ResponseWriter, r *http.Request) error {
