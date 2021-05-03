@@ -3,6 +3,7 @@ module git.sequentialread.com/forest/caddy/v2
 go 1.16
 
 require (
+  git.sequentialread.com/forest/caddy-layer4 v0.0.0-20210503162114-9084104ddcf5 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/alecthomas/chroma v0.9.2
 	github.com/aryann/difflib v0.0.0-20210328193216-ff5ff6dc229b
