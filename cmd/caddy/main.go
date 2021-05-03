@@ -31,6 +31,8 @@ import (
 
 	// plug in Caddy modules here
 	_ "git.sequentialread.com/forest/caddy/v2/modules/standard"
+
+	_ "git.sequentialread.com/forest/caddy-layer4"
 )
 
 func main() {
