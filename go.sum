@@ -66,6 +66,8 @@ git.apache.org/thrift.git v0.0.0-20180902110319-2566ecd5d999/go.mod h1:fPE2ZNJGy
 git.sequentialread.com/forest/caddy-layer4 v0.0.0-20210503162114-9084104ddcf5 h1:sNdPVkifpQsmyCfrgMjUqnYQj/qgG+AqqnM8I9wguCs=
 git.sequentialread.com/forest/caddy-layer4 v0.0.0-20210503162114-9084104ddcf5/go.mod h1:McJeSH7PcKso/vAEXjlInLNBzqmW82jLaSm+35IZ38Q=
 git.sequentialread.com/forest/caddy/v2 v2.4.0-beta.2-forest/go.mod h1:lFOFY5xAcSLI/QVS9tKqGcvEIv56k8FsBrW6Uga3h5A=
+git.sequentialread.com/forest/caddy2-proxyprotocol v0.0.2-forest h1:sIwS4s/OYMhn/NY2kseKuQY/D9FyrVLx0ZWlw/x9LKg=
+git.sequentialread.com/forest/caddy2-proxyprotocol v0.0.2-forest/go.mod h1:g1CoEDOELKlXEZStfBDMTclhAcYDInAdk665JwDuJpQ=
 github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
 github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96 h1:cTp8I5+VIoKjsnZuH8vjyaysT/ses3EvZeaV/1UkF2M=
 github.com/AndreasBriese/bbloom v0.0.0-20190825152654-46b345b51c96/go.mod h1:bOvUY6CB00SOBii9/FifXqc0awNKxLFCL/+pkDPuyl8=
