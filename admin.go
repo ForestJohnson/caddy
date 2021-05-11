@@ -30,7 +30,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/pprof"
-	"net/url"
 	"os"
 	"path"
 	"regexp"
@@ -454,33 +453,6 @@ func (h adminHandler) handleError(w http.ResponseWriter, r *http.Request, err er
 	if encErr != nil {
 		Log().Named("admin.api").Error("failed to encode error response", zap.Error(encErr))
 	}
-}
-
-// checkHost returns a handler that wraps next such that
-// it will only be called if the request's Host header matches
-// a trustworthy/expected value. This helps to mitigate DNS
-// rebinding attacks.
-func (h adminHandler) checkHost(r *http.Request) error {
-	var allowed bool
-	if !allowed {
-		return APIError{
-			HTTPStatus: http.StatusForbidden,
-			Err:        fmt.Errorf("host not allowed: %s", r.Host),
-		}
-	}
-	return nil
-}
-
-func (h adminHandler) getOriginHost(r *http.Request) string {
-	origin := r.Header.Get("Origin")
-	if origin == "" {
-		origin = r.Header.Get("Referer")
-	}
-	originURL, err := url.Parse(origin)
-	if err == nil && originURL.Host != "" {
-		origin = originURL.Host
-	}
-	return origin
 }
 
 func handleConfig(w http.ResponseWriter, r *http.Request) error {
