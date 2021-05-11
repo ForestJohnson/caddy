@@ -33,6 +33,7 @@ import (
 	_ "git.sequentialread.com/forest/caddy/v2/modules/standard"
 
 	_ "git.sequentialread.com/forest/caddy-layer4"
+	_ "git.sequentialread.com/forest/caddy2-proxyprotocol"
 )
 
 func main() {
