@@ -25,3 +25,6 @@ caddy-dist
 # IDE files
 .idea/
 .vscode/
+
+# sequentialread specific files
+build/
