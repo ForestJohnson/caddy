@@ -22,12 +22,12 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig"
-	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
-	caddycmd "github.com/caddyserver/caddy/v2/cmd"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp/headers"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/httpcaddyfile"
+	caddycmd "git.sequentialread.com/forest/caddy/v2/cmd"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp/headers"
 )
 
 func init() {

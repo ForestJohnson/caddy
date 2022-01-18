@@ -15,9 +15,9 @@
 package httpcaddyfile
 
 import (
-	"github.com/caddyserver/caddy/v2/caddyconfig"
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddypki"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddypki"
 )
 
 func init() {

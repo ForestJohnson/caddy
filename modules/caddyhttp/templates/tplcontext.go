@@ -27,10 +27,10 @@ import (
 	"sync"
 	"text/template"
 
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
 	"github.com/Masterminds/sprig/v3"
 	"github.com/alecthomas/chroma/formatters/html"
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	"github.com/yuin/goldmark/extension"
@@ -161,7 +161,7 @@ func (c TemplateContext) funcHTTPInclude(uri string) (string, error) {
 	}
 	virtReq.Host = c.Req.Host
 	virtReq.Header = c.Req.Header.Clone()
-	virtReq.Header.Set("Accept-Encoding", "identity") // https://github.com/caddyserver/caddy/issues/4352
+	virtReq.Header.Set("Accept-Encoding", "identity") // https://git.sequentialread.com/forest/caddy/issues/4352
 	virtReq.Trailer = c.Req.Trailer.Clone()
 	virtReq.Header.Set(recursionPreventionHeader, strconv.Itoa(recursionCount))
 

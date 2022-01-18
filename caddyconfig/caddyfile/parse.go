@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/caddyserver/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2"
 )
 
 // Parse parses the input just enough to group tokens, in

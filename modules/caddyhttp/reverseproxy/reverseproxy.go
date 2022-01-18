@@ -31,10 +31,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp/headers"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp/headers"
 	"go.uber.org/zap"
 	"golang.org/x/net/http/httpguts"
 )
@@ -345,7 +345,7 @@ func (h *Handler) Provision(ctx caddy.Context) error {
 
 // Cleanup cleans up the resources made by h during provisioning.
 func (h *Handler) Cleanup() error {
-	// TODO: Close keepalive connections on reload? https://github.com/caddyserver/caddy/pull/2507/files#diff-70219fd88fe3f36834f474ce6537ed26R762
+	// TODO: Close keepalive connections on reload? https://git.sequentialread.com/forest/caddy/pull/2507/files#diff-70219fd88fe3f36834f474ce6537ed26R762
 
 	// remove hosts from our config from the pool
 	for _, upstream := range h.Upstreams {

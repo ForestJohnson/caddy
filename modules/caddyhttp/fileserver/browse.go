@@ -26,9 +26,9 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp/templates"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp/templates"
 	"go.uber.org/zap"
 )
 
@@ -59,7 +59,7 @@ func (fsrv *FileServer) serveBrowse(root, dirPath string, w http.ResponseWriter,
 	// redirects and especially redirect loops! (Redirecting using the
 	// original URI is necessary because that's the URI the browser knows,
 	// we don't want to redirect from internally-rewritten URIs.)
-	// See https://github.com/caddyserver/caddy/issues/4205.
+	// See https://git.sequentialread.com/forest/caddy/issues/4205.
 	origReq := r.Context().Value(caddyhttp.OriginalRequestCtxKey).(http.Request)
 	if path.Base(origReq.URL.Path) == path.Base(r.URL.Path) {
 		if !strings.HasSuffix(origReq.URL.Path, "/") {

@@ -23,9 +23,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
 	"github.com/caddyserver/certmagic"
 )
 
@@ -353,7 +353,7 @@ func (a Address) Normalize() Address {
 
 // lowerExceptPlaceholders lowercases s except within
 // placeholders (substrings in non-escaped '{ }' spans).
-// See https://github.com/caddyserver/caddy/issues/3264
+// See https://git.sequentialread.com/forest/caddy/issues/3264
 func lowerExceptPlaceholders(s string) string {
 	var sb strings.Builder
 	var escaped, inPlaceholder bool

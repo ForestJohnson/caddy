@@ -23,7 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/caddyserver/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2"
 )
 
 func init() {

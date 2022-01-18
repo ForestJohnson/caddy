@@ -24,12 +24,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig"
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/caddyserver/caddy/v2/modules/caddypki"
-	"github.com/caddyserver/caddy/v2/modules/caddytls"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddypki"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddytls"
 )
 
 func init() {
@@ -501,7 +501,7 @@ func (st *ServerType) serversFromPairings(
 			if iWildcardHost != jWildcardHost {
 				// site blocks that have a key with a wildcard in the hostname
 				// must always be less specific than blocks without one; see
-				// https://github.com/caddyserver/caddy/issues/3410
+				// https://git.sequentialread.com/forest/caddy/issues/3410
 				return jWildcardHost && !iWildcardHost
 			}
 			if specificity(iLongestHost) == specificity(jLongestHost) {
@@ -642,7 +642,7 @@ func (st *ServerType) serversFromPairings(
 			}
 
 			// add log associations
-			// see https://github.com/caddyserver/caddy/issues/3310
+			// see https://git.sequentialread.com/forest/caddy/issues/3310
 			sblockLogHosts := sblock.hostsFromKeys(true)
 			for _, cval := range sblock.pile["custom_log"] {
 				ncl := cval.Value.(namedCustomLog)
@@ -696,7 +696,7 @@ func (st *ServerType) serversFromPairings(
 		// least have a matching connection policy, so here we append a
 		// catch-all/default policy if there isn't one already (it's
 		// important that it goes at the end) - see issue #3004:
-		// https://github.com/caddyserver/caddy/issues/3004
+		// https://git.sequentialread.com/forest/caddy/issues/3004
 		// TODO: maybe a smarter way to handle this might be to just make the
 		// auto-HTTPS logic at provision-time detect if there is any connection
 		// policy missing for any HTTPS-enabled hosts, if so, add it... maybe?
@@ -1061,7 +1061,7 @@ func normalizeDirectiveName(directive string) string {
 	// As a special case, we want "handle_path" to be sorted
 	// at the same level as "handle", so we force them to use
 	// the same directive name after their parsing is complete.
-	// See https://github.com/caddyserver/caddy/issues/3675#issuecomment-678042377
+	// See https://git.sequentialread.com/forest/caddy/issues/3675#issuecomment-678042377
 	if directive == "handle_path" {
 		directive = "handle"
 	}

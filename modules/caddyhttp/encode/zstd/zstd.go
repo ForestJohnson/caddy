@@ -15,9 +15,9 @@
 package caddyzstd
 
 import (
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp/encode"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp/encode"
 	"github.com/klauspost/compress/zstd"
 )
 

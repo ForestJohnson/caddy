@@ -3,7 +3,7 @@ package logging
 import (
 	"testing"
 
-	"github.com/caddyserver/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2"
 	"go.uber.org/zap/zapcore"
 )
 

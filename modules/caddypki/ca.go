@@ -23,7 +23,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caddyserver/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2"
 	"github.com/caddyserver/certmagic"
 	"github.com/smallstep/certificates/authority"
 	"github.com/smallstep/certificates/db"

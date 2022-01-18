@@ -21,12 +21,12 @@ import (
 	"testing"
 	"time"
 
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig"
+	caddycmd "git.sequentialread.com/forest/caddy/v2/cmd"
 	"github.com/aryann/difflib"
-	"github.com/caddyserver/caddy/v2/caddyconfig"
-	caddycmd "github.com/caddyserver/caddy/v2/cmd"
 
 	// plug in Caddy modules here
-	_ "github.com/caddyserver/caddy/v2/modules/standard"
+	_ "git.sequentialread.com/forest/caddy/v2/modules/standard"
 )
 
 // Defaults store any configuration required to make the tests run

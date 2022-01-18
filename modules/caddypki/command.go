@@ -21,8 +21,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caddyserver/caddy/v2"
-	caddycmd "github.com/caddyserver/caddy/v2/cmd"
+	"git.sequentialread.com/forest/caddy/v2"
+	caddycmd "git.sequentialread.com/forest/caddy/v2/cmd"
 	"github.com/smallstep/truststore"
 )
 

@@ -22,7 +22,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/caddyserver/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2"
 )
 
 func TestMatchExpressionProvision(t *testing.T) {

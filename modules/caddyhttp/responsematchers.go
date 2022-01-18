@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
 )
 
 // ResponseMatcher is a type which can determine if an

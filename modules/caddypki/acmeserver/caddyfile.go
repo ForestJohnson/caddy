@@ -15,8 +15,8 @@
 package acmeserver
 
 import (
-	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddypki"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/httpcaddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddypki"
 )
 
 func init() {

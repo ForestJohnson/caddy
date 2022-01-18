@@ -15,8 +15,8 @@
 package templates
 
 import (
-	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/httpcaddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
 )
 
 func init() {

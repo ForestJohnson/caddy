@@ -126,13 +126,13 @@ func (h Handler) flushInterval(req *http.Request, res *http.Response) time.Durat
 
 // isBidirectionalStream returns whether we should work in bi-directional stream mode.
 //
-// See https://github.com/caddyserver/caddy/pull/3620 for discussion of nuances.
+// See https://git.sequentialread.com/forest/caddy/pull/3620 for discussion of nuances.
 func (h Handler) isBidirectionalStream(req *http.Request, res *http.Response) bool {
 	// We have to check the encoding here; only flush headers with identity encoding.
 	// Non-identity encoding might combine with "encode" directive, and in that case,
 	// if body size larger than enc.MinLength, upper level encode handle might have
 	// Content-Encoding header to write.
-	// (see https://github.com/caddyserver/caddy/issues/3606 for use case)
+	// (see https://git.sequentialread.com/forest/caddy/issues/3606 for use case)
 	ae := req.Header.Get("Accept-Encoding")
 
 	return req.ProtoMajor == 2 &&

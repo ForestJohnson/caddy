@@ -23,8 +23,8 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/caddyserver/caddy/v2"
-	caddycmd "github.com/caddyserver/caddy/v2/cmd"
+	"git.sequentialread.com/forest/caddy/v2"
+	caddycmd "git.sequentialread.com/forest/caddy/v2/cmd"
 	"golang.org/x/term"
 )
 

@@ -38,7 +38,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caddyserver/caddy/v2/notify"
+	"git.sequentialread.com/forest/caddy/v2/notify"
 	"github.com/caddyserver/certmagic"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"

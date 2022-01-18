@@ -28,7 +28,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddyhttp"
 )
 
 type handle struct {

@@ -31,7 +31,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caddyserver/caddy/v2/notify"
+	"git.sequentialread.com/forest/caddy/v2/notify"
 	"github.com/caddyserver/certmagic"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -783,4 +783,4 @@ var (
 )
 
 // ImportPath is the package import path for Caddy core.
-const ImportPath = "github.com/caddyserver/caddy/v2"
+const ImportPath = "git.sequentialread.com/forest/caddy/v2"

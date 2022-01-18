@@ -21,9 +21,9 @@ import (
 	"encoding/pem"
 	"time"
 
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
-	"github.com/caddyserver/caddy/v2/modules/caddypki"
+	"git.sequentialread.com/forest/caddy/v2"
+	"git.sequentialread.com/forest/caddy/v2/caddyconfig/caddyfile"
+	"git.sequentialread.com/forest/caddy/v2/modules/caddypki"
 	"github.com/caddyserver/certmagic"
 	"github.com/smallstep/certificates/authority/provisioner"
 	"go.uber.org/zap"
